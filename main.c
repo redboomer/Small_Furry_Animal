@@ -50,11 +50,24 @@
 #define PRESCALE      ((UINT16)  2)         
 #define TC1_VAL       ((UINT16)  (((BUS_CLK_FREQ / PRESCALE) / 2) / OC_FREQ_HZ))
 
+// Boolean Definitions to make the code more readable.
+#define FALSE 0
+#define TRUE 1
+#define MAXINPUTVALUES 10
 
-// Test code.
-UINT16 interruptCounter = 0;
+// This is a generic index.
+UINT16 index = 0;
 
-// I prefer the newschool method of declaring functions at the top of the file HR.
+// Normally I'd use something awesome like a bool but we're stuck with this err
+// limited system.
+// This is used to let the program know when to capture values.
+UINT16 captureValues = FALSE;
+
+// holds the timer values captured on the rising edge.
+UINT16 timerValuesUs [1001] = { 0 };
+
+// I prefer the new school method of declaring functions at the top of the file HR.
+void getMeasurements(void);
 void getMoronsInput(UINT16* lowerBoundaryUs, UINT16* upperBoundaryUs);
 UINT16 getUINT16Input();
 
@@ -140,12 +153,22 @@ void InitializeTimer(void)
 //--------------------------------------------------------------       
 void interrupt 9 OC1_isr( void )
 {
-  // use this interrupt  
+   // This interrupt stores the values from the table into the array.
+   // we don't want to do any calculations because we are dealing with
+   // Us and want the reads to be as accurate as possible.
   
-  ++interruptCounter;
+   if (captureValues == TRUE && index < MAXINPUTVALUES) 
+   {
+    
+      timerValuesUs[index] = TC1;
+      ++index;
   
-  //TC1     +=  TC1_VAL;      
-  TFLG1   =   TFLG1_C1F_MASK;  
+     //TC1     +=  TC1_VAL;      
+   }
+   
+   // set the interrupt enable flag for that port because it is cleared every
+   // everytime an interrupt fires.
+   TFLG1   =   TFLG1_C1F_MASK;
 }
 #pragma pop
 
@@ -204,11 +227,14 @@ void main(void)
   // Show initial prompt
   getMoronsInput(&lowerBoundaryUs, &upperBoundaryUs);
   
-  (void)printf("\n lowerBoundaryUs  %u\n",  lowerBoundaryUs);
-  (void)printf("\n upperBoundaryUs  %u\n",  upperBoundaryUs);
-  (void)printf("\n interruptCounter  %u\n", interruptCounter);    
-  
-  // get measurements when user pushes a key.
+  // Debug code
+  //(void)printf("\r\nlowerBoundaryUs  %u\r\n",  lowerBoundaryUs);
+  //(void)printf("upperBoundaryUs  %u\r\n",  upperBoundaryUs);
+  (void)printf("index  %u\r\n", index);
+  // end Debug code.    
+ 
+  // get measurements when user pushes a key.  
+  (void) getMeasurements();
   
   // calculate out the results
   
@@ -224,6 +250,42 @@ void main(void)
 }
 
 //*****************************************************************************
+// This unmitigated piece of crap will set the captureValues flag to true and
+// and then poll the index until we have MAXINPUTVALUES readings.
+//
+// Parameters: NONE
+//
+// Return: NONE
+//*****************************************************************************
+void getMeasurements(void) 
+{
+  int i = 0;
+  (void) printf("Press any key to capture the readings. ");
+  
+  if(GetChar()) 
+  {
+     // turn on recording the rising edge values.
+     captureValues = TRUE;
+     
+     // clean up our output to the screen.
+     (void) printf("\r\n");
+  }
+    
+  while (index < MAXINPUTVALUES) {
+  // spin in a tight loop while we collect the data.
+  }
+    
+  // turn off recording the rising edge values.
+  captureValues = FALSE;
+    
+  // This is debug code and will be ruthlessly commented out.   
+  for (i = 0; i < index; ++i) 
+  {
+       (void)printf("timerValuesUs[%d]  %u\r\n", i, timerValuesUs[i]);
+  };
+}
+
+//*****************************************************************************
 // This unmitigated piece of crap will get the upper and lower boundaries we
 // are going to use in 
 //
@@ -234,17 +296,17 @@ void main(void)
 void getMoronsInput(UINT16* lowerBoundaryUs, UINT16* upperBoundaryUs) 
 { 
    // Explain the program to the user.
-   (void) printf("This fine piece of crap program will give you a histogram of 1000 rising edge\n");
-   (void) printf("rising edge interarrival times.  It will display the results as a 100 bucket \n");
-   (void) printf("histogram in ascening order, with the lowest arrival time for that bucket\n");
-   (void) printf("displayed.\n\n");
+   (void) printf("This fine piece of crap program will give you a histogram of 1000 rising edge\r\n");
+   (void) printf("rising edge interarrival times.  It will display the results as a 100 bucket \r\n");
+   (void) printf("histogram in ascening order, with the lowest arrival time for that bucket\r\n");
+   (void) printf("displayed.\r\n\r\n");
    
    // Get the lower range.
    (void) printf("Please enter the lower range in microseconds. ");
    *lowerBoundaryUs = getUINT16Input();
          
    // Get the upper range.
-   (void) printf("\nPlease enter the upper range in microseconds. ");
+   (void) printf("\r\nPlease enter the upper range in microseconds. ");
    *upperBoundaryUs = getUINT16Input();   
 }
 
@@ -267,9 +329,11 @@ UINT16 getUINT16Input()
       // Read the digits into a buffer until you get a carage return.
    do
    { 
-      // Fetch and echo use input
+      // Fetch and echo the user input
       buffer[bufferIndex] = GetChar();
+      (void)printf("%c", buffer[bufferIndex]);
       
+      // If it's a digit store it.
       if(isdigit( buffer[bufferIndex]) && bufferIndex < 5) 
       {
         ++bufferIndex;
