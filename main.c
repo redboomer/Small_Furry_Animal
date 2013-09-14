@@ -55,6 +55,9 @@
 #define TRUE 1
 #define MAXINPUTVALUES 1001
 
+// Number of buckets in the histogram.
+const int numberOfBuckets = 100; 
+
 // This is a generic index.
 UINT16 index = 0;
 
@@ -75,17 +78,13 @@ UINT16 minimumHistogramValue [100] = { 0 };
 // holds the minimum time value for each histogram bucket.
 UINT16 histogram [100] = { 0 };
 
-const int numberOfBuckets = 100; 
-
 // I prefer the new school method of declaring functions at the top of the file HR.
 void displayResults();
 void getMeasurements(void);
 void getMoronsInput(UINT16* lowerBoundaryUs, UINT16* upperBoundaryUs);
 UINT16 getUINT16Input();
+UINT16 post_function(void);
 void processTimerMeasurements(UINT16 lowerBoundaryUs, UINT16 upperBoundaryUs);
-
-
-
 
 // Initializes SCI0 for 8N1, 9600 baud, polled I/O
 // The value for the baud selection registers is determined
@@ -233,35 +232,39 @@ void main(void)
    
   // Post function
   
-  //start of main loop 
+  // if we pass post run the program otherwise go home.
+  if(post_function()) 
+  {
+    
   
-  // Explain the program to the user.
-  (void) printf("This fine piece of crap program will give you a histogram of 1000 rising edge\r\n");
-  (void) printf("rising edge interarrival times.  It will display the results as a 100 bucket \r\n");
-  (void) printf("histogram in ascening order, with the lowest arrival time for that bucket\r\n");
-  (void) printf("displayed.\r\n\r\n");
+    //start of main loop 
   
-  // Get the input
-  getMoronsInput(&lowerBoundaryUs, &upperBoundaryUs);
+    // Explain the program to the user.
+    (void) printf("This fine piece of crap program will give you a histogram of 1000 rising edge\r\n");
+    (void) printf("rising edge interarrival times.  It will display the results as a 100 bucket \r\n");
+    (void) printf("histogram in ascening order, with the lowest arrival time for that bucket\r\n");
+    (void) printf("displayed.\r\n\r\n");
   
-  // Debug code
-  //(void)printf("\r\nlowerBoundaryUs  %u\r\n",  lowerBoundaryUs);
-  //(void)printf("upperBoundaryUs  %u\r\n",  upperBoundaryUs);
-  (void)printf("index  %u\r\n", index);
-  // end Debug code.    
+    // Get the input
+    getMoronsInput(&lowerBoundaryUs, &upperBoundaryUs);
+  
+    // Debug code
+    //(void)printf("\r\nlowerBoundaryUs  %u\r\n",  lowerBoundaryUs);
+    //(void)printf("upperBoundaryUs  %u\r\n",  upperBoundaryUs);
+    //(void)printf("index  %u\r\n", index);
+    // end Debug code.    
  
-  // get measurements when user pushes a key.  
-  (void) getMeasurements();
+    // get measurements when user pushes a key.  
+    (void) getMeasurements();
   
-  // calculate the histogram and outputs.
-  (void) processTimerMeasurements(lowerBoundaryUs, upperBoundaryUs);
+    // calculate the histogram and outputs.
+    (void) processTimerMeasurements(lowerBoundaryUs, upperBoundaryUs);
   
-  // display results.
-  (void) displayResults();
+    // display results.
+    (void) displayResults();
+  }
   
   // press e to end program or any other key get a new set of inputs.
-  
-
 }
 
 //*****************************************************************************
@@ -331,7 +334,7 @@ void displayResults()
 void getMeasurements(void) 
 {
   int i = 0;
-  (void) printf("Press any key to capture the readings. ");
+  (void) printf("\r\nPress any key to capture the readings. ");
   
   if(GetChar()) 
   {
@@ -385,7 +388,6 @@ void getMoronsInput(UINT16* lowerBoundaryUs, UINT16* upperBoundaryUs)
 //
 // Return: A value between 0 and 65535
 //*****************************************************************************
-
 UINT16 getUINT16Input() 
 {
    UINT8 buffer [6];
@@ -421,6 +423,29 @@ UINT16 getUINT16Input()
    value = atoi (buffer);
       
    return value;  
+}
+
+//*****************************************************************************
+// This unmitigated piece of crap will test to make sure the timer is running
+// on the board.  If it is not running it will print an error message and fail.
+//
+//
+// Parameters:  None.
+//
+// Return: None.
+//*****************************************************************************
+UINT16 post_function(void){
+  UINT16 timer_check_value1, timer_check_value2;   //Two values to check whether timer is running or not.
+  UINT8 i;
+  timer_check_value1 =  TCNT;                      //Take first value at some time.
+  for(i=0;i<200;i++) {                             //Take some rest before reading second value
+  }
+  timer_check_value2 =  TCNT;                      //Take second value at some time
+  if (timer_check_value2 == timer_check_value1) {
+    (void)printf("POST failed! You buggy man.\r\n");        //POST get failed. Big reason to worry!
+    return FALSE;
+  }
+  return TRUE;
 }
 
 //*****************************************************************************
