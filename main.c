@@ -53,7 +53,7 @@
 // Boolean Definitions to make the code more readable.
 #define FALSE 0
 #define TRUE 1
-#define MAXINPUTVALUES 100
+#define MAXINPUTVALUES 1001
 
 // This is a generic index.
 UINT16 index = 0;
