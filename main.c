@@ -53,7 +53,7 @@
 // Boolean Definitions to make the code more readable.
 #define FALSE 0
 #define TRUE 1
-#define MAXINPUTVALUES 10
+#define MAXINPUTVALUES 100
 
 // This is a generic index.
 UINT16 index = 0;
@@ -264,12 +264,28 @@ void main(void)
 
 }
 
+//*****************************************************************************
+// This unmitigated piece of crap will display the lowest value in each bucket
+// of the minimumHistogramValue table and the number of entries in the
+// corresponding bucket in the histogram table one value at at time.
+// The user will need to press any key to see the next non-zero entry in the 
+// tables.  
+//
+// The histogram is stored in the histogram table in the global namespace.
+// The minimum values for each bucket are stored in the minimumHistogramValue table
+// in the global namespace.
+//
+// Parameters: None
+//
+// Return: None.
+//*****************************************************************************
 void displayResults() 
 {
   int i = 0;
+  UINT8 userinput = 0;
   
   // This is debug code and will be ruthlessly commented out.
-          
+/*          
   for (i = 0; i < numberOfBuckets; ++i) 
   {
      if (histogram[i] !=0) 
@@ -278,10 +294,13 @@ void displayResults()
        (void)printf("minimumHistogramValue[%d]  %u\r\n", i, minimumHistogramValue[i]);
      }
   };
-  
-/*          
+*/  
+          
   // Give them the instructions
-  (void)printf("Histogram results.  Please press a key to show each histogram entry.\r\n");
+  (void)printf("Please press a key to show each histogram entry.\r\n");
+  
+  userinput = GetChar();
+  
   (void)printf("\r\nStart of the histogram results.\r\n"); 
                  
   for (i = 0; i < numberOfBuckets; ++i) 
@@ -290,11 +309,12 @@ void displayResults()
      {
        //(void)printf("histogram[%d]  %u\r\n", i, histogram[i]);
        (void)printf("minimumValue %u  histogram[%d]  %u \r\n", minimumHistogramValue[i], i, histogram[i]);
+       userinput = GetChar();
      }
   };
   
   (void)printf("End of the histogram results..\r\n\r\n"); 
-  */
+  
 }
 
 
