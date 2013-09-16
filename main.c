@@ -73,16 +73,16 @@ UINT16 timerValuesUs [1001] = { 0 };
 UINT16 pulseIntervalsUs [1000] = { 0 };
 
 // holds the minimum time value for each histogram bucket.
-UINT16 minimumHistogramValue [100] = { 0 };
+UINT16 minimumHistogramValueUs [100] = { 0 };
 
 // holds the minimum time value for each histogram bucket.
 UINT16 histogram [100] = { 0 };
 
 // I prefer the new school method of declaring functions at the top of the file HR.
-void displayResults();
+void displayResults(void);
 void getMeasurements(void);
 void getMoronsInput(UINT16* lowerBoundaryUs, UINT16* upperBoundaryUs);
-UINT16 getUINT16Input();
+UINT16 getUINT16Input(void);
 UINT16 post_function(void);
 void processTimerMeasurements(UINT16 lowerBoundaryUs, UINT16 upperBoundaryUs);
 
@@ -235,36 +235,55 @@ void main(void)
   // if we pass post run the program otherwise go home.
   if(post_function()) 
   {
+     // Explain the program to the user.
+     (void) printf("This fine piece of crap program will give you a histogram of 1000 rising edge\r\n");
+     (void) printf("rising edge interarrival times.  It will display the results as a 100 bucket \r\n");
+     (void) printf("histogram in ascening order, with the lowest arrival time for that bucket\r\n");
+     (void) printf("displayed.\r\n\r\n");
+  
+  
+     //start of main loop 
+     for(;;)
+     {
+        // Check to see if the user wants another set of readings
+        (void) printf("Press s key to capture the readings or e to end the program. ");
+        userInput = GetChar();
+        (void)printf("%c", userInput);;
     
+        if(userInput == 's') {
+          // clean out any old data in our tables.
+          index = 0;
+          memset(timerValuesUs, 0, sizeof(timerValuesUs));
+          memset(pulseIntervalsUs, 0, sizeof(pulseIntervalsUs));
+          memset(minimumHistogramValueUs, 0, sizeof(minimumHistogramValueUs));
+          memset(histogram, 0, sizeof(histogram));
+        
+           // Get the input
+           getMoronsInput(&lowerBoundaryUs, &upperBoundaryUs);
   
-    //start of main loop 
-  
-    // Explain the program to the user.
-    (void) printf("This fine piece of crap program will give you a histogram of 1000 rising edge\r\n");
-    (void) printf("rising edge interarrival times.  It will display the results as a 100 bucket \r\n");
-    (void) printf("histogram in ascening order, with the lowest arrival time for that bucket\r\n");
-    (void) printf("displayed.\r\n\r\n");
-  
-    // Get the input
-    getMoronsInput(&lowerBoundaryUs, &upperBoundaryUs);
-  
-    // Debug code
-    //(void)printf("\r\nlowerBoundaryUs  %u\r\n",  lowerBoundaryUs);
-    //(void)printf("upperBoundaryUs  %u\r\n",  upperBoundaryUs);
-    //(void)printf("index  %u\r\n", index);
-    // end Debug code.    
+           // Debug code
+           //(void)printf("\r\nlowerBoundaryUs  %u\r\n",  lowerBoundaryUs);
+           //(void)printf("upperBoundaryUs  %u\r\n",  upperBoundaryUs);
+           //(void)printf("index  %u\r\n", index);
+           // end Debug code.    
  
-    // get measurements when user pushes a key.  
-    (void) getMeasurements();
+           // get measurements when user pushes a key.  
+           (void) getMeasurements();
   
-    // calculate the histogram and outputs.
-    (void) processTimerMeasurements(lowerBoundaryUs, upperBoundaryUs);
+           // calculate the histogram and outputs.
+           (void) processTimerMeasurements(lowerBoundaryUs, upperBoundaryUs);
   
-    // display results.
-    (void) displayResults();
+           // display results.
+           (void) displayResults();
+        } 
+        else if(userInput == 'e'){
+           // exit the program.
+           break;
+        }
+     }
   }
   
-  // press e to end program or any other key get a new set of inputs.
+  (void) printf("\r\n\r\nOk I'm outa here!!!\r\n\r\n");
 }
 
 //*****************************************************************************
@@ -282,7 +301,7 @@ void main(void)
 //
 // Return: None.
 //*****************************************************************************
-void displayResults() 
+void displayResults(void) 
 {
   int i = 0;
   UINT8 userinput = 0;
@@ -311,7 +330,7 @@ void displayResults()
      if (histogram[i] !=0) 
      {
        //(void)printf("histogram[%d]  %u\r\n", i, histogram[i]);
-       (void)printf("minimumValue %u  histogram[%d]  %u \r\n", minimumHistogramValue[i], i, histogram[i]);
+       (void)printf("minimumValue %u  histogram[%d]  %u \r\n", minimumHistogramValueUs[i], i, histogram[i]);
        userinput = GetChar();
      }
   };
@@ -342,7 +361,7 @@ void getMeasurements(void)
      captureValues = TRUE;
      
      // clean up our output to the screen.
-     (void) printf("\r\n");
+     (void) printf("\r\n\r\n");
   }
     
   while (index < MAXINPUTVALUES) {
@@ -352,11 +371,13 @@ void getMeasurements(void)
   // turn off recording the rising edge values.
   captureValues = FALSE;
     
-  // This is debug code and will be ruthlessly commented out.   
+  // This is debug code and will be ruthlessly commented out.  
+  /* 
   for (i = 0; i < index; ++i) 
   {
        (void)printf("timerValuesUs[%d]  %u\r\n", i, timerValuesUs[i]);
   };
+  */
 }
 
 //*****************************************************************************
@@ -372,7 +393,7 @@ void getMeasurements(void)
 void getMoronsInput(UINT16* lowerBoundaryUs, UINT16* upperBoundaryUs) 
 {  
    // Get the lower range.
-   (void) printf("Please enter the lower range in microseconds. ");
+   (void) printf("\r\nPlease enter the lower range in microseconds. ");
    *lowerBoundaryUs = getUINT16Input();
          
    // Get the upper range.
@@ -388,7 +409,7 @@ void getMoronsInput(UINT16* lowerBoundaryUs, UINT16* upperBoundaryUs)
 //
 // Return: A value between 0 and 65535
 //*****************************************************************************
-UINT16 getUINT16Input() 
+UINT16 getUINT16Input(void) 
 {
    UINT8 buffer [6];
    INT8 bufferIndex = 0;
@@ -418,6 +439,7 @@ UINT16 getUINT16Input()
    // append a null character on the end of our array.
    buffer[bufferIndex] = 0;
    
+   // Debug code
 //   (void)printf("\n  buffer[bufferIndex] %s\n",  buffer); 
    
    value = atoi (buffer);
@@ -469,7 +491,7 @@ void processTimerMeasurements(UINT16 lowerBoundaryUs, UINT16 upperBoundaryUs)
    const UINT16 maxUnsignedValue = 65535;                
    int i = 0;
    int histogramIndex = 0;
-   
+     
    // calculate out the size of each bucket.
    int quotent = (upperBoundaryUs - lowerBoundaryUs) / numberOfBuckets;
    
@@ -488,7 +510,7 @@ void processTimerMeasurements(UINT16 lowerBoundaryUs, UINT16 upperBoundaryUs)
      }
      
      // This is debug code 
-     (void)printf("pulseIntervalsUs[%d]  %u\r\n", i, pulseIntervalsUs[i]);
+     //(void)printf("pulseIntervalsUs[%d]  %u\r\n", i, pulseIntervalsUs[i]);
    }
    
     // Construct the histogram and update the lowest value for each histogram bucket.
@@ -496,11 +518,11 @@ void processTimerMeasurements(UINT16 lowerBoundaryUs, UINT16 upperBoundaryUs)
    {
       if(pulseIntervalsUs[i] < lowerBoundaryUs)
       {
-        (void)printf("pulseIntervalsUs[%d] %u is below the lower range\r\n", i, pulseIntervalsUs[i]);
+        (void)printf("Error: pulseIntervalsUs[%d] %u is below the lower range\r\n", i, pulseIntervalsUs[i]);
       }
       else if (pulseIntervalsUs[i] > upperBoundaryUs )
       {
-         (void)printf("pulseIntervalsUs[%d] %u is above the upper range\r\n", i, pulseIntervalsUs[i]);
+         (void)printf("Error:pulseIntervalsUs[%d] %u is above the upper range\r\n", i, pulseIntervalsUs[i]);
       } 
       else 
       {
@@ -509,21 +531,21 @@ void processTimerMeasurements(UINT16 lowerBoundaryUs, UINT16 upperBoundaryUs)
          // calculate the index for the histogram
          histogramIndex = ((pulseIntervalsUs[i] - lowerBoundaryUs) / quotent);
          
-         (void)printf("histogramIndex %d = %u\r\n", i, histogramIndex);
+         //(void)printf("histogramIndex %d = %u\r\n", i, histogramIndex);
          
          // Check to see if we need to update the lowest value for that bucket 
          if (histogram[histogramIndex] == 0) 
          {
               // This bucket is empty.  Just add the value to it.
-              minimumHistogramValue[histogramIndex] = pulseIntervalsUs[i];
+              minimumHistogramValueUs[histogramIndex] = pulseIntervalsUs[i];
               
               // This is debug code  
               // (void)printf("Empty Bucket %d minimumHistogramValue[%d]  %u\r\n", i, histogramIndex, minimumHistogramValue[i]);
          } 
-         else if (pulseIntervalsUs[i] < minimumHistogramValue[histogramIndex]) 
+         else if (pulseIntervalsUs[i] < minimumHistogramValueUs[histogramIndex]) 
          {
               // we have a new lowest value for that bucket.
-               minimumHistogramValue[histogramIndex] = pulseIntervalsUs[i]; 
+               minimumHistogramValueUs[histogramIndex] = pulseIntervalsUs[i]; 
                    
                // This is debug code  
                // (void)printf("Changed value is %d minimumHistogramValue[%d]  %u\r\n", i, histogramIndex, minimumHistogramValue[i]);
@@ -532,7 +554,6 @@ void processTimerMeasurements(UINT16 lowerBoundaryUs, UINT16 upperBoundaryUs)
          // increment the histogram bucket;
          ++histogram[histogramIndex]; 
       }
-       
    }
 }
 
